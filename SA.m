@@ -3,6 +3,8 @@ function [dt]=SA(x,freq)
 % x data
 % date: time indicator
 % freq 12 monthly, 4 frequently, 1 yearly
+% all random process consist of at least three type of ??. Tred,
+% Seasonal movment, white noise.
 %% Step 1.
 
 [T,K ]= size(x);

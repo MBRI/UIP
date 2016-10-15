@@ -7,4 +7,5 @@ ix=zeros(i0,i1);
 for l=1:L
     ix= ix + strcmp(c1,c2(l));
 end
+ix=logical(ix);
 end
