@@ -1,9 +1,9 @@
 %load Data
 %Data=dataset('xls','DataBaseu.xlsx','sheet','Sheet3');
-% estimate ols: EE? ~ rer EE1(-1) dr0 dpi NFA_MB Y_Y_  Openness tot dum
+% estimate ols: EE? ~ rer EE1(-1) dr0 dpi NFA_MB Y_YU  Openness tot dum
 %Ind_var={'Con' 'rer' 'EE0' 'dr0' 'dpi0' 'NFA_MB' 'Y_YU'  'Openness' 'tot' 'dum' 'Rs'}; % independent Variables
-%Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con' 'NFA_MB' 'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables 
-Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'NFA_MB'  'Rs' 'tot' 'Y_YU' 'Rh'}; % it is good
+% Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con' 'NFA_MB' 'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables 
+Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'NFA_MB' 'dum'  'Y_YU' 'Rh'}; % it is good
 % Ind_var={'rer' 'EE1'  'Con' 'dr0' 'dpi0'}; % 
 
 dum_var=cmpr(Ind_var,{'dum' 'Con' 'dum_time'});
@@ -37,12 +37,4 @@ endo_var=Ind_var2(~dum_var2).';
 B1=B1.';
 X3=X(~any(isnan(X),2),:);
 ahat=Jackknife_inf_hor(BX0,X3,Y-X2*BX0,size(Y,1),Ind_var2,{'dum' 'Con' 'dum_time'});
-[bsBX,bsB2,Prc]=BootStrap_inf_hor(BX,zeros(1,size(Y,2)),Y-X2*((X2.'*X2)\(X2.'*Y)),size(Y,1),endo_var,ahat);%mean(Y)
-B2CI=mat2dataset([Prc.BCa2, B2],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',endo_var);
-B1CI=mat2dataset([Prc.BCa1, B1],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',endo_var);
-B2CI.Sig=B2CI.lower<=B2 & B2CI.Upper>=B2;
-B1CI.Sig=B1CI.lower<=B1 & B1CI.Upper>=B1;
-%'B2'
-B2CI
-%'B1'
-B1CI
+[bsBX,bsB2,CI]=BootStrap_inf_hor(BX,zeros(1,size(Y,2)),Y-X2*((X2.'*X2)\(X2.'*Y)),size(Y,1),endo_var,ahat);%mean(Y)

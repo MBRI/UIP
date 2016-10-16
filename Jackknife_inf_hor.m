@@ -52,50 +52,16 @@ BX(:,:,isnan(B2(1,:)))=[];
 B1(:,isnan(B2(1,:)))=[];
 B2(:,isnan(B2(1,:)))=[];
 K=size(B1,2);
+
+% if K<100
+%    warning(['inefficient sampling\\\ ' num2str(K) ' from ' num2str(BurnCount) ])
+% end
 % ahat2
 ahat1=sum((repmat(B1(:,1),1,K-1)-B1(:,2:end)).^3,2)./sum((repmat(B1(:,1),1,K-1)-B1(:,2:end)).^2,2).^(3/2)/6;
 ahat2=sum((repmat(B2(:,1),1,K-1)-B2(:,2:end)).^3,2)./sum((repmat(B2(:,1),1,K-1)-B2(:,2:end)).^2,2).^(3/2)/6;
 ahat.a1=ahat1;
 ahat.a2=ahat2;
-%{
-Prc1=prctile(B1,100*[alpha,0.5,1-alpha],2);
-Prc2=prctile(B2,100*[alpha,0.5,1-alpha],2);
-Prc.Prc1=Prc1;
-Prc.Prc2=Prc2;
-% BCa
-B1O=B(EE_Position,:);% original B1
-B2O=(B1O/(eye(size(B,2))-B)).';% original B2
-B1O=B1O.';
-Tk=size(B2,2);
-if Tk<100
-    warning(['inefficient sampling\\\ ' num2str(Tk) ' from ' num2str(BurnCount) ])
-end
-z0HatB2=norminv(sum(B2<repmat(B2O,1,Tk),2)/Tk);
-ahat=0;
-a1B2=normcdf(z0HatB2+(z0HatB2+norminv(alpha))./(1-ahat.*(z0HatB2+norminv(alpha))));
-a2B2=normcdf(z0HatB2+(z0HatB2+norminv(0.5))./(1-ahat.*(z0HatB2+norminv(0.5))));
-a3B2=normcdf(z0HatB2+(z0HatB2+norminv(1-alpha))./(1-ahat.*(z0HatB2+norminv(1-alpha))));
-%BCa2=prctile(B2,[100*a1,100*a2,100*a3],2);
-Tk=size(B1,2);
-z0HatB1=norminv(sum(B1<repmat(B1O,1,Tk),2)/Tk);
-a1B1=normcdf(z0HatB1+(z0HatB1+norminv(alpha))./(1-ahat.*(z0HatB1+norminv(alpha))));
-a2B1=normcdf(z0HatB1+(z0HatB1+norminv(0.5))./(1-ahat.*(z0HatB1+norminv(0.5))));
-a3B1=normcdf(z0HatB1+(z0HatB1+norminv(1-alpha))./(1-ahat.*(z0HatB1+norminv(1-alpha))));
-%----
-BCa1=nan(K,3);
-BCa2=BCa1;
-for k=1:K
-    %     figure;
-    %     ksdensity(B2(k,:))
-    BCa1(k,1:3)=prctile(B1(k,:),[100*a1B1(k),100*a2B1(k),100*a3B1(k)],2);
-    BCa2(k,1:3)=prctile(B2(k,:),[100*a1B2(k),100*a2B2(k),100*a3B2(k)],2);
-    % [ci,bootstat]=bootci(100,{@mean,B2(:,k)},'type','bca');
-    % k
-    % ci
-end
-Prc.BCa1=BCa1;
-Prc.BCa2=BCa2;
-%}
+
 end
 function [BX,B2,B1,Er]=est(X,Exo,EE_Position)
 % X endo genius time series
@@ -120,15 +86,15 @@ BX0=(X.'*X)\X.'*Y;
 B1=BX0(EE_Position,:);
 BX=BX0(1:end-size(Exo,2),:);
 EigenValues=abs(eig(BX));
-if any(EigenValues>=0.96)
-    % warning(':: infinie  horizon Explosive ::');
-    K=size(BX,1);
-    BX=nan(K);
-    B2=nan(K,1);
-    B1=B2;
-    Er=nan(size(X));
-else
+% if any(EigenValues>=0.96)
+%     % warning(':: infinie  horizon Explosive ::');
+%     K=size(BX,1);
+%     BX=nan(K);
+%     B2=nan(K,1);
+%     B1=B2;
+%     Er=nan(size(X));
+% else
     B2=(B1/(eye(size(BX,2))-BX)).';
     Er=Y-X*BX0;
-end
+% end
 end

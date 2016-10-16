@@ -1,4 +1,4 @@
-function [BX,B2,Prc,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
+function [BX,B2,CI,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
 % bootstrap infinite horizon UIP
 % B is the estimated coef. matrix without dummy and constant
 % Starting point to run the bootstrap
@@ -7,11 +7,11 @@ function [BX,B2,Prc,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
 % Var_names endogenus variables name
 % ahat is jacknife acceletion index contian a1 and a2
 FireCount=500+Tt; % the size of samples
-BurnCount=1000; % the number of generated sapmles
+BurnCount=3000; % the number of generated sapmles
 alpha=0.05;% significant level
 EE_Position=strcmp(Var_names,'EE1');
 % Step1. Get the estimation data and errors
-
+Borig=B;
 K=size(B,1);
 B(EE_Position,:)=zeros(1,K);% impose Restriction
 
@@ -45,8 +45,8 @@ B2(:,isnan(B2(1,:)))=[];
 
 Prc1=prctile(B1,100*[alpha,0.5,1-alpha],2);
 Prc2=prctile(B2,100*[alpha,0.5,1-alpha],2);
-Prc.Prc1=Prc1;
-Prc.Prc2=Prc2;
+% Prc.Prc1=Prc1;
+% Prc.Prc2=Prc2;
 % BCa
 B1O=B(EE_Position,:);% original B1
 B2O=(B1O/(eye(size(B,2))-B)).';% original B2
@@ -78,8 +78,26 @@ BCa2(k,1:3)=prctile(B2(k,:),[100*a1B2(k),100*a2B2(k),100*a3B2(k)],2);
 % k
 % ci
 end
-Prc.BCa1=BCa1;
-Prc.BCa2=BCa2;
+% Prc.BCa1=BCa1;
+% Prc.BCa2=BCa2;
+B1O=Borig(EE_Position,:);% original B1
+B2O=(B1O/(eye(size(Borig,2))-Borig)).';% original B2
+B1O=B1O.';
+% BCa Stored
+B2CI=mat2dataset([BCa2, B2O],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',Var_names);
+B1CI=mat2dataset([BCa1, B1O],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',Var_names);
+B2CI.Sig=B2CI.lower<=B2O & B2CI.Upper>=B2O;
+B1CI.Sig=B1CI.lower<=B1O & B1CI.Upper>=B1O;
+CI.BCa.B1=B1CI;
+CI.BCa.B2=B2CI;
+% percentile Stored
+B2CI=mat2dataset([Prc2, B2O],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',Var_names);
+B1CI=mat2dataset([Prc1, B1O],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',Var_names);
+B2CI.Sig=B2CI.lower<=B2O & B2CI.Upper>=B2O;
+B1CI.Sig=B1CI.lower<=B1O & B1CI.Upper>=B1O;
+
+CI.Prc.B1=B1CI;
+CI.Prc.B2=B2CI;
 end
 function [BX,B2,B1,Er]=est(X,EE_Position)
 %% infinie  horizon
