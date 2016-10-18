@@ -9,7 +9,7 @@ FireCount=size(Err,1)+1; % the size of samples
 BurnCount=size(Err,1)+1; % the number of generated sapmles
 alpha=0.05;% significant level
 EE_Position=strcmp(endo_names,'EE1');
-xx_Position=cmpr(endo_names,Exo_names);
+xx_Position=cellfun(@(x) ~isempty(x),regexpi(endo_names,strjoin(Exo_names,'|')));
 % Step1. Get the estimation data and errors
 XoX=StartingPoint(:,xx_Position);
 B0X=B(xx_Position,:);

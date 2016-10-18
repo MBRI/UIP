@@ -1,0 +1,20 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Histograms of PIT:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Number of buckets for histograms:
+kk = round(T2/10);
+
+figure('Name', 'PITs')
+for ii = 1:N
+    subplot(3, N, ii), hist(VAR.pit(:, ii), kk), axis square, title(vnamesvar(ii))
+    subplot(3, N, N+ii), hist(TAR.pit(:, ii), kk), axis square, title(vnamesvar(ii))
+    
+end
+
+% figure('Name', 'PITs, inverse N')
+% for ii = 1:N
+%     subplot(2, N, ii), hist(VAR.pitin(:, ii), kk), axis square, title('VAR')
+%     subplot(2, N, N+ii), hist(TAR.pitin(:, ii), kk), axis square, title('TAR')
+% end
+
+clear kk

@@ -1,0 +1,39 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Percentiles against data
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Choose a pair of percentiles (ordered as in 'percentiles'):
+temppct = [1 5];
+
+% Tickmarks for dates:
+datesind = 1:12:342;
+
+
+figure('Name', 'PCTL & data, horizon 1 (all)')
+
+for ii = 1:1
+
+    % pick 1st and last percentile:
+    tempM1 = squeeze(VAR.pct(:,ii,1, temppct ));    
+    tempM2 = squeeze(TAR.pct(:,ii,1, temppct ));
+    tempM3 = squeeze(TVTP.pct(:,ii,1, temppct ));
+    
+%     subplot(2, 2, ii)
+    hold on
+    plot(tempM1, 'b-', 'LineWidth', 2), axis tight,
+    plot(tempM2, 'r-', 'LineWidth', 2), axis tight, 
+    plot(tempM3, 'c-', 'LineWidth', 2), axis tight, 
+    plot(dataout(T0+1:T0+T2, ii), 'k--', 'LineWidth', 1)
+    hold off
+    title(vnamestar(ii))
+    xlabel('Time')
+       
+end
+legend('VAR^§', '', 'VAR', '', 'TAR', '', 'data')
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% clean up
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+clear temp*

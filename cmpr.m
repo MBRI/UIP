@@ -1,4 +1,5 @@
 function ix=cmpr(c1,c2)
+% it must be removed
 % compare c1 with every elemnt of c2
 % c1 and c2 are cell
 L=length(c2);

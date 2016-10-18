@@ -3,10 +3,13 @@
 % estimate ols: EE? ~ rer EE1(-1) dr0 dpi NFA_MB Y_YU  Openness tot dum
 %Ind_var={'Con' 'rer' 'EE0' 'dr0' 'dpi0' 'NFA_MB' 'Y_YU'  'Openness' 'tot' 'dum' 'Rs'}; % independent Variables
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con' 'NFA_MB' 'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables 
-Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'NFA_MB' 'dum'  'Y_YU' 'Rh'}; % it is good
+Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'NFA_MB' 'dum1' 'Y_YU' 'Rh'}; % it is good
 % Ind_var={'rer' 'EE1'  'Con' 'dr0' 'dpi0'}; % 
+% find dummies position
+% pay attention all dummies start with dum
+% the constant term must be con
+dum_var=cellfun(@(x) ~isempty(x),regexpi(Ind_var,'dum[\w*]|con'));
 
-dum_var=cmpr(Ind_var,{'dum' 'Con' 'dum_time'});
 
 B=nan(length(Ind_var),40);
 X=double(Data(:,Ind_var));
@@ -36,5 +39,5 @@ B2=(B1/(eye(size(BX,2))-BX)).';
 endo_var=Ind_var2(~dum_var2).';
 B1=B1.';
 X3=X(~any(isnan(X),2),:);
-ahat=Jackknife_inf_hor(BX0,X3,Y-X2*BX0,size(Y,1),Ind_var2,{'dum' 'Con' 'dum_time'});
+ahat=Jackknife_inf_hor(BX0,X3,Y-X2*BX0,size(Y,1),Ind_var2,Ind_var(dum_var));
 [bsBX,bsB2,CI]=BootStrap_inf_hor(BX,zeros(1,size(Y,2)),Y-X2*((X2.'*X2)\(X2.'*Y)),size(Y,1),endo_var,ahat);%mean(Y)

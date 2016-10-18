@@ -4,9 +4,9 @@
 %Ind_var={'Con' 'rer' 'EE0' 'dr0' 'dpi0' 'NFA_MB' 'Y_YU'  'Openness' 'tot' 'dum' 'Rs'}; % independent Variables
 %Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con' 'NFA_MB' 'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables 
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'NFA_MB'  'Rs' 'tot' 'Y_YU' 'Rh'}; % it is good
-Ind_var={'rer' 'EE1'  'Con' 'dr0' 'dpi0'}; % 
+Ind_var={'rer' 'EE1'  'Con' 'dr0' 'dpi0' 'dum1'}; % 
 
-dum_var=cmpr(Ind_var,{'dum' 'Con' 'dum_time'});
+dum_var=cmpr(Ind_var,{'dum1' 'Con' 'dum_time'});
 
 B=nan(length(Ind_var),40);
 X=double(Data(:,Ind_var));
@@ -36,6 +36,7 @@ for i=1:40
     end
     B(~indd,i)=(X2.'*X2)\X2.'*Y;
 end
+return
 %% infinie  horizon
 Y=lagmatrix(X(:,~dum_var),-1); % remove constant and dummy
 X2=X;
