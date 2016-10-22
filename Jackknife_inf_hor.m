@@ -7,7 +7,7 @@ function [ahat]=Jackknife_inf_hor(B,StartingPoint,Err,Tt,endo_names,Exo_names)
 % Var_names endogenus variables name
 FireCount=size(Err,1)+1; % the size of samples
 BurnCount=size(Err,1)+1; % the number of generated sapmles
-alpha=0.05;% significant level
+% alpha=0.05;% significant level
 EE_Position=strcmp(endo_names,'EE1');
 xx_Position=cellfun(@(x) ~isempty(x),regexpi(endo_names,strjoin(Exo_names,'|')));
 % Step1. Get the estimation data and errors
@@ -28,8 +28,11 @@ for b=1:BurnCount
     % Step2. Generate Psedu Sample: We exclude one error term in each turn
 
     % Gener Startinf point
+%     if b>1
     X(1,:,b)=StartingPoint(1,:);
-  
+%     else
+%         X(1,:,b)=StartingPoint(1,:)-Err(1,:);
+%     end
     for f=2:FireCount
         if f~=b
             X(f,:,b)=X(f-1,:,b)*B+XoX(f-1,:)*B0X+Err(f-1,:);
@@ -85,7 +88,11 @@ Y(inan,:)=[];
 BX0=(X.'*X)\X.'*Y;
 B1=BX0(EE_Position,:);
 BX=BX0(1:end-size(Exo,2),:);
-EigenValues=abs(eig(BX));
+% if any(any(isnan(BX)))
+%     EigenValues=1;
+% else
+% EigenValues=abs(eig(BX));
+% end
 % if any(EigenValues>=0.96)
 %     % warning(':: infinie  horizon Explosive ::');
 %     K=size(BX,1);

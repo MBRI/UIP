@@ -14,7 +14,7 @@ EE_Position=strcmp(Var_names,'EE1');
 Borig=B;
 K=size(B,1);
 B(EE_Position,:)=zeros(1,K);% impose Restriction
-
+warning('off')
 
 X=nan(FireCount,K,BurnCount);
 BX=nan(K,K,BurnCount);
@@ -38,6 +38,7 @@ end
 %    disp('me'); 
 % end
 end
+warning('on')
 % Step5. Descript the results
 BX(:,:,isnan(B2(1,:)))=[];
 B1(:,isnan(B2(1,:)))=[];
@@ -115,16 +116,20 @@ Y(inan,:)=[];
 % BX(~indd,~indd)=(X.'*X)\X.'*Y;
 BX=(X.'*X)\X.'*Y;
 B1=BX(EE_Position,:);
-EigenValues=abs(eig(BX));
-if any(EigenValues>=0.96)
-   % warning(':: infinie  horizon Explosive ::');
-    K=size(BX,1);
-    BX=nan(K);
-    B2=nan(K,1);
-    B1=B2;
-    Er=nan(size(X));
-else
+% if any(any(isnan(BX)))
+%     EigenValues=1;
+% else
+% EigenValues=abs(eig(BX));
+% end
+% if any(EigenValues>=0.96)
+%    % warning(':: infinie  horizon Explosive ::');
+%     K=size(BX,1);
+%     BX=nan(K);
+%     B2=nan(K,1);
+%     B1=B2;
+%     Er=nan(size(X));
+% else
 B2=(B1/(eye(size(BX,2))-BX)).';
 Er=Y-X*BX;
-end
+% end
 end
