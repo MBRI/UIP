@@ -1,4 +1,4 @@
-function [ahat]=Jackknife_inf_hor(B,StartingPoint,Err,Tt,endo_names,Exo_names)
+function [ahat]=Jackknife_inf_hor(B,StartingPoint,Err,Var_names,Exo_names)
 % bootstrap infinite horizon UIP
 % B is the estimated coef. matrix without dummy and constant
 % Starting point to run the bootstrap
@@ -8,14 +8,48 @@ function [ahat]=Jackknife_inf_hor(B,StartingPoint,Err,Tt,endo_names,Exo_names)
 FireCount=size(Err,1)+1; % the size of samples
 BurnCount=size(Err,1)+1; % the number of generated sapmles
 % alpha=0.05;% significant level
-EE_Position=strcmp(endo_names,'EE1');
-xx_Position=cellfun(@(x) ~isempty(x),regexpi(endo_names,strjoin(Exo_names,'|')));
+xx_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,strjoin(Exo_names,'|')));
+endoVar=Var_names(~xx_Position);
+EE_Position=cellfun(@(x) ~isempty(x),regexpi(endoVar,'EE[\w*]'));
+dp_Position=cellfun(@(x) ~isempty(x),regexpi(endoVar,'dp[\w*]'));
+
 % Step1. Get the estimation data and errors
 XoX=StartingPoint(:,xx_Position);
+if size(StartingPoint,1)<FireCount
+    XoX(end+1,:)=XoX(end,:);
+end
 B0X=B(xx_Position,:);
-  StartingPoint(:,xx_Position)=[];% Remove exogenius variables
-B(EE_Position,:)=0;%zeros(1,K);% impose Restriction
+% exo removed
 B(xx_Position,:)=[];
+
+  StartingPoint(:,xx_Position)=[];% Remove exogenius variables
+  K=size(B,1);
+% impose Restriction
+% EE restriction
+B(:,EE_Position)=zeros(1,K);
+
+% 
+% dp restriction
+delta1=zeros(K,1);
+delta1(strcmp(endoVar,'rer'),1)=1;
+delta3=zeros(K,1);
+delta3(cellfun(@(x) ~isempty(x),regexpi(endoVar,'dr[\w*]')),1)=1;
+
+B(:,dp_Position)=B(:,strcmp(endoVar,'rer'))+delta3-delta1;
+
+
+
+% error term restriction
+EC=eye(size(Err,2));
+EC(EE_Position,EE_Position)=0;% zero sel error
+EC(cellfun(@(x) ~isempty(x),regexpi(endoVar,'dp[\w*]')),EE_Position)=-1;% zero sel error
+EC(cellfun(@(x) ~isempty(x),regexpi(endoVar,'rer')),EE_Position)=1;% zero sel error
+% Constant Term restriction
+CC=eye(size(Err,2));
+
+CC(dp_Position,dp_Position)=0;% zero sel error
+CC(cellfun(@(x) ~isempty(x),regexpi(endoVar,'EE[\w*]')),dp_Position)=-1;% zero sel error
+CC(cellfun(@(x) ~isempty(x),regexpi(endoVar,'rer')),dp_Position)=1;% zero sel error
 
 K0=size(B,2);
 K=size(B,1);
@@ -35,9 +69,9 @@ for b=1:BurnCount
 %     end
     for f=2:FireCount
         if f~=b
-            X(f,:,b)=X(f-1,:,b)*B+XoX(f-1,:)*B0X+Err(f-1,:);
+            X(f,:,b)=X(f-1,:,b)*B+XoX(f-1,:)*B0X*CC+Err(f-1,:)*EC;
         else
-            X(f,:,b)=X(f-1,:,b)*B+XoX(f-1,:)*B0X;
+            X(f,:,b)=X(f-1,:,b)*B+XoX(f-1,:)*B0X*CC;
         end
         
     end

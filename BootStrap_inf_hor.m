@@ -9,11 +9,26 @@ function [BX,B2,CI,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
 FireCount=500+Tt; % the size of samples
 BurnCount=3000; % the number of generated sapmles
 alpha=0.05;% significant level
-EE_Position=strcmp(Var_names,'EE1');
+EE_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'EE[\w*]'));
+dp_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'dp[\w*]'));
 % Step1. Get the estimation data and errors
 Borig=B;
 K=size(B,1);
-B(EE_Position,:)=zeros(1,K);% impose Restriction
+% impose Restriction
+% EE restriction
+B(:,EE_Position)=zeros(1,K);
+% dp restriction
+delta1=zeros(K,1);
+delta1(strcmp(Var_names,'rer'),1)=1;
+delta3=zeros(K,1);
+delta3(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[\w*]')),1)=1;
+
+B(:,dp_Position)=B(:,strcmp(Var_names,'rer'))+delta3-delta1;
+% error term restriction
+EC=eye(size(Err,2));
+EC(EE_Position,EE_Position)=0;% zero sel error
+EC(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dp[\w*]')),EE_Position)=-1;% zero sel error
+EC(cellfun(@(x) ~isempty(x),regexpi(Var_names,'rer')),EE_Position)=1;% zero sel error
 warning('off')
 
 X=nan(FireCount,K,BurnCount);
@@ -27,9 +42,9 @@ for b=1:BurnCount;
 % Gener Randome seed to select Error 
 ee =fix(random('uni',1,Tt,FireCount,1));
 % Gener Startinf point 
-X(1,:,b)=StartingPoint+Err(ee(1),:);
+X(1,:,b)=StartingPoint+Err(ee(1),:)*EC;
 for f=2:FireCount
-     X(f,:,b)=X(f-1,:,b)*B+Err(ee(f),:);
+     X(f,:,b)=X(f-1,:,b)*B+Err(ee(f),:)*EC;
 end
 % Step3. Estimate model with the last t observation
 [BX(:,:,b),B2(:,b),B1(:,b)]=est(X(end-Tt-1:end,:,b),EE_Position);%(,:,b)
@@ -52,9 +67,9 @@ Prc2=prctile(B2,100*[alpha,0.5,1-alpha],2);
 B1O=B(EE_Position,:);% original B1
 B2O=(B1O/(eye(size(B,2))-B)).';% original B2
 B1O=B1O.';
-Tk=size(B2,2);
-if Tk<100
-   warning(['inefficient sampling\\\ ' num2str(Tk) ' from ' num2str(BurnCount) ])
+Tk=size(B2,2)
+if Tk<1000
+   warning(['inefficient sampling :: ' num2str(Tk) ' from ' num2str(BurnCount) ])
 end
 z0HatB2=norminv(sum(B2<repmat(B2O,1,Tk),2)/Tk);
 
@@ -116,20 +131,20 @@ Y(inan,:)=[];
 % BX(~indd,~indd)=(X.'*X)\X.'*Y;
 BX=(X.'*X)\X.'*Y;
 B1=BX(EE_Position,:);
-% if any(any(isnan(BX)))
-%     EigenValues=1;
-% else
-% EigenValues=abs(eig(BX));
-% end
-% if any(EigenValues>=0.96)
-%    % warning(':: infinie  horizon Explosive ::');
-%     K=size(BX,1);
-%     BX=nan(K);
-%     B2=nan(K,1);
-%     B1=B2;
-%     Er=nan(size(X));
-% else
+if any(any(isnan(BX)))
+    EigenValues=1;
+else
+EigenValues=abs(eig(BX));
+end
+if any(EigenValues>0.96)
+   % warning(':: infinie  horizon Explosive ::');
+    K=size(BX,1);
+    BX=nan(K);
+    B2=nan(K,1);
+    B1=B2;
+    Er=nan(size(X));
+else
 B2=(B1/(eye(size(BX,2))-BX)).';
 Er=Y-X*BX;
-% end
+end
 end

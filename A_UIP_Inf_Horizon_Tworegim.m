@@ -3,8 +3,10 @@
 % estimate ols: EE? ~ rer EE1(-1) dr0 dpi NFA_MB Y_YU  Openness tot dum
 %Ind_var={'Con' 'rer' 'EE0' 'dr0' 'dpi0' 'NFA_MB' 'Y_YU'  'Openness' 'tot' 'dum' 'Rs'}; % independent Variables
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con' 'NFA_MB' 'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables
-Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'dum2'  }; % it is
-% Ind_var={'rer' 'EE1'  'Con' 'dr0' 'dpi0'}; %
+% Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'dum2'  }; % it is good
+load('data5.mat')
+j=1;
+Ind_var={'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j-1)] ['dp' num2str(j)] 'dum3' 'dum2' 'dum1'}; %
 % find dummies position
 % pay attention all dummies start with dum
 % the constant term must be con
@@ -18,9 +20,16 @@ X=double(Data(:,Ind_var));
 X(:,~dum_var)=SA(X(:,~dum_var),4);
 % X(1:4,:)=[]; % remove from the first Data.Date>1992 ? <2006
 %% infinie  horizon
-for i=1:length(Regims)
-    X2=X(regimVar==Regims(i),:);
-    Y=lagmatrix(X2(:,~dum_var),-1); % remove constant and dummy
+for i=0:length(Regims)
+    if i==0
+        X2=X;%(regimVar==Regims(i),:);
+    else
+        X2=X(regimVar==Regims(i),:);
+    end
+    Y=lagmatrix(X(:,~dum_var),-1); % remove constant and dummy
+    if i~=0
+        Y=Y(regimVar==Regims(i),:);
+    end
     inan=any(isnan(X2),2) | any(isnan(Y),2);
     X2(inan,:)=[];
     Y(inan,:)=[];
@@ -35,14 +44,23 @@ for i=1:length(Regims)
     B1=BX(strcmp(Ind_var2,'EE1'),:);%B(~dum_var,1).';
     EigenValues=abs(eig(BX));
     if any(EigenValues>=0.96)
-        warning(':: infinie  horizon Explosive ::');
+        warning([':: infinie  horizon, Found Explosion in Regime ' num2str(i) '  ::']);
     end
     B2=(B1/(eye(size(BX,2))-BX)).';
     endo_var=Ind_var2(~dum_var2).';
     B1=B1.';
-    X3=X(~any(isnan(X),2) & regimVar==Regims(i),~indd);
-    ahat=Jackknife_inf_hor(BX0,X3,Y-X2*BX0,size(Y,1),Ind_var2,Ind_var2(dum_var2));
+    
+    if i==0
+        X3=X(~any(isnan(X),2),~indd);
+    else
+        X3=X(~any(isnan(X),2) & regimVar==Regims(i),~indd);
+    end
+    ahat=Jackknife_inf_hor(BX0,X3,Y-X2*BX0,Ind_var2,Ind_var2(dum_var2));
     [bsBX,bsB2,CI]=BootStrap_inf_hor(BX,zeros(1,size(Y,2)),Y-X2*((X2.'*X2)\(X2.'*Y)),size(Y,1),endo_var,ahat);%mean(Y)
     Res.(['R' num2str(i)])=struct('CI',CI,'BX',bsBX,'B2',bsB2);
+    disp(['Regime ' num2str(i) ' is done']);
 end
 clearvars -except Data Res
+Res.R0.CI.BCa.B1
+Res.R1.CI.BCa.B1
+Res.R2.CI.BCa.B1
