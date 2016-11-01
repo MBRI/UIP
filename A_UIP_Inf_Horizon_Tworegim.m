@@ -6,7 +6,7 @@
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'dum2'  }; % it is good
 load('data5.mat')
 j=1;
-Ind_var={'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j-1)] ['dp' num2str(j)] 'dum3' 'dum2' 'dum1'}; %
+Ind_var={ 'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j)] ['dp' num2str(j)] 'dum3' 'dum2' 'dum1'}; %
 % find dummies position
 % pay attention all dummies start with dum
 % the constant term must be con
@@ -26,7 +26,7 @@ for i=0:length(Regims)
     else
         X2=X(regimVar==Regims(i),:);
     end
-    Y=lagmatrix(X(:,~dum_var),-1); % remove constant and dummy
+    Y=lagmatrix(X(:,~dum_var),-j); % remove constant and dummy
     if i~=0
         Y=Y(regimVar==Regims(i),:);
     end
@@ -43,7 +43,7 @@ for i=0:length(Regims)
     BX=BX0(~dum_var2,:).';
     B1=BX(strcmp(Ind_var2,'EE1'),:);%B(~dum_var,1).';
     EigenValues=abs(eig(BX));
-    if any(EigenValues>=0.96)
+    if any(EigenValues>=0.99)
         warning([':: infinie  horizon, Found Explosion in Regime ' num2str(i) '  ::']);
     end
     B2=(B1/(eye(size(BX,2))-BX)).';

@@ -1,5 +1,5 @@
 function [BX,B2,CI,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
-% bootstrap infinite horizon UIP
+%% bootstrap infinite horizon UIP
 % B is the estimated coef. matrix without dummy and constant
 % Starting point to run the bootstrap
 % Err original error term
@@ -21,9 +21,10 @@ B(:,EE_Position)=zeros(1,K);
 delta1=zeros(K,1);
 delta1(strcmp(Var_names,'rer'),1)=1;
 delta3=zeros(K,1);
-delta3(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[\w*]')),1)=1;
+% delta3(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[\w*]')),1)=1; %% Notice
 
-B(:,dp_Position)=B(:,strcmp(Var_names,'rer'))+delta3-delta1;
+B(:,dp_Position)=B(:,strcmp(Var_names,'rer'))+delta3-delta1; %% Notice
+
 % error term restriction
 EC=eye(size(Err,2));
 EC(EE_Position,EE_Position)=0;% zero sel error
@@ -35,23 +36,32 @@ X=nan(FireCount,K,BurnCount);
 BX=nan(K,K,BurnCount);
 B2=nan(K,BurnCount);% infinite horizon bootstraped data
 B1=nan(K,BurnCount);% EE1 eq. coef.
-for b=1:BurnCount;
-% Step2. Generate Psedu Sample: We draw the error terms with equal
-% probability from the vector of error terms estimated VAR
-
-% Gener Randome seed to select Error 
-ee =fix(random('uni',1,Tt,FireCount,1));
-% Gener Startinf point 
-X(1,:,b)=StartingPoint+Err(ee(1),:)*EC;
-for f=2:FireCount
-     X(f,:,b)=X(f-1,:,b)*B+Err(ee(f),:)*EC;
-end
-% Step3. Estimate model with the last t observation
-[BX(:,:,b),B2(:,b),B1(:,b)]=est(X(end-Tt-1:end,:,b),EE_Position);%(,:,b)
-% Step4. Store the results
-% if abs(B2(1,b))>4
-%    disp('me'); 
-% end
+b=0;
+while(b<BurnCount)
+    b=b+1;
+    %for b=1:BurnCount
+    % Step2. Generate Psedu Sample: We draw the error terms with equal
+    % probability from the vector of error terms estimated VAR
+    
+    % Gener Randome seed to select Error
+    ee =fix(random('uni',1,Tt,FireCount,1));
+    % Gener Startinf point
+    X(1,:,b)=StartingPoint+Err(ee(1),:)*EC;
+    for f=2:FireCount
+        X(f,:,b)=X(f-1,:,b)*B+Err(ee(f),:)*EC;
+    end
+    % Step3. Estimate model with the last t observation
+    [BX(:,:,b),B2(:,b),B1(:,b)]=est(X(end-Tt-1:end,:,b),EE_Position);%(,:,b)
+    if any(any(isnan(BX(:,:,b))))
+       b=b-1;
+    elseif rem(b,300)==0
+       disp(['Done::' num2str(b)]); 
+    end
+    % Step4. Store the results
+    % if abs(B2(1,b))>4
+    %    disp('me');
+    % end
+    
 end
 warning('on')
 % Step5. Descript the results
@@ -69,7 +79,7 @@ B2O=(B1O/(eye(size(B,2))-B)).';% original B2
 B1O=B1O.';
 Tk=size(B2,2)
 if Tk<1000
-   warning(['inefficient sampling :: ' num2str(Tk) ' from ' num2str(BurnCount) ])
+    warning(['inefficient sampling :: ' num2str(Tk) ' from ' num2str(BurnCount) ])
 end
 z0HatB2=norminv(sum(B2<repmat(B2O,1,Tk),2)/Tk);
 
@@ -86,13 +96,13 @@ a3B1=normcdf(z0HatB1+(z0HatB1+norminv(1-alpha))./(1-ahat.a1.*(z0HatB1+norminv(1-
 BCa1=nan(K,3);
 BCa2=BCa1;
 for k=1:K
-%     figure;
-%     ksdensity(B2(k,:))
-BCa1(k,1:3)=prctile(B1(k,:),[100*a1B1(k),100*a2B1(k),100*a3B1(k)],2);
-BCa2(k,1:3)=prctile(B2(k,:),[100*a1B2(k),100*a2B2(k),100*a3B2(k)],2);
-% [ci,bootstat]=bootci(100,{@mean,B2(:,k)},'type','bca');
-% k
-% ci
+    %     figure;
+    %     ksdensity(B2(k,:))
+    BCa1(k,1:3)=prctile(B1(k,:),[100*a1B1(k),100*a2B1(k),100*a3B1(k)],2);
+    BCa2(k,1:3)=prctile(B2(k,:),[100*a1B2(k),100*a2B2(k),100*a3B2(k)],2);
+    % [ci,bootstat]=bootci(100,{@mean,B2(:,k)},'type','bca');
+    % k
+    % ci
 end
 % Prc.BCa1=BCa1;
 % Prc.BCa2=BCa2;
@@ -123,7 +133,7 @@ X(inan,:)=[];
 Y(inan,:)=[];
 % remove invariant variables except constant
 % indd=var(X)==0;
-% 
+%
 % X(:,indd)=[];
 % Y(:,indd)=[];
 %Ind_var2=Ind_var;Ind_var2(:,indd)=[];dum_var2=dum_var();dum_var2(:,indd)=[];
@@ -134,17 +144,17 @@ B1=BX(EE_Position,:);
 if any(any(isnan(BX)))
     EigenValues=1;
 else
-EigenValues=abs(eig(BX));
+    EigenValues=abs(eig(BX));
 end
 if any(EigenValues>0.96)
-   % warning(':: infinie  horizon Explosive ::');
+    % warning(':: infinie  horizon Explosive ::');
     K=size(BX,1);
     BX=nan(K);
     B2=nan(K,1);
     B1=B2;
     Er=nan(size(X));
 else
-B2=(B1/(eye(size(BX,2))-BX)).';
-Er=Y-X*BX;
+    B2=(B1/(eye(size(BX,2))-BX)).';
+    Er=Y-X*BX;
 end
 end
