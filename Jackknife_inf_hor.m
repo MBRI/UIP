@@ -31,9 +31,9 @@ B(:,EE_Position)=zeros(1,K);
 % 
 % dp restriction
 delta1=zeros(K,1);
-delta1(strcmp(endoVar,'rer'),1)=1;
+delta1(strcmp(endoVar,'rer'),1)=1; %real exchange rate multipler
 delta3=zeros(K,1);
-%delta3(cellfun(@(x) ~isempty(x),regexpi(endoVar,'dr[\w*]')),1)=1; % nOTE
+delta3(cellfun(@(x) ~isempty(x),regexpi(endoVar,'dr[\w*]')),1)=1; % nOTE
 
 B(:,dp_Position)=B(:,strcmp(endoVar,'rer'))+delta3-delta1;
 

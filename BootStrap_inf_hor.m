@@ -8,7 +8,7 @@ function [BX,B2,CI,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
 % ahat is jacknife acceletion index contian a1 and a2
 FireCount=500+Tt; % the size of samples
 BurnCount=3000; % the number of generated sapmles
-alpha=0.05;% significant level
+alpha=0.1;% significant level
 EE_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'EE[\w*]'));
 dp_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'dp[\w*]'));
 % Step1. Get the estimation data and errors
@@ -21,7 +21,7 @@ B(:,EE_Position)=zeros(1,K);
 delta1=zeros(K,1);
 delta1(strcmp(Var_names,'rer'),1)=1;
 delta3=zeros(K,1);
-% delta3(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[\w*]')),1)=1; %% Notice
+ delta3(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[\w*]')),1)=1; %% Notice
 
 B(:,dp_Position)=B(:,strcmp(Var_names,'rer'))+delta3-delta1; %% Notice
 
@@ -77,7 +77,7 @@ Prc2=prctile(B2,100*[alpha,0.5,1-alpha],2);
 B1O=B(EE_Position,:);% original B1
 B2O=(B1O/(eye(size(B,2))-B)).';% original B2
 B1O=B1O.';
-Tk=size(B2,2)
+Tk=size(B2,2);
 if Tk<1000
     warning(['inefficient sampling :: ' num2str(Tk) ' from ' num2str(BurnCount) ])
 end

@@ -2,11 +2,11 @@
 %Data=dataset('xls','DataBaseu.xlsx','sheet','Sheet3');
 % estimate ols: EE? ~ rer EE1(-1) dr0 dpi NFA_MB Y_YU  Openness tot dum
 %Ind_var={'Con' 'rer' 'EE0' 'dr0' 'dpi0' 'NFA_MB' 'Y_YU'  'Openness' 'tot' 'dum' 'Rs'}; % independent Variables
-% Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con' 'NFA_MB' 'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables
+% Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con'  'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'dum2'  }; % it is good
 load('data5.mat')
 j=1;
-Ind_var={ 'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j)] ['dp' num2str(j)] 'dum3' 'dum2' 'dum1'}; %
+Ind_var={ 'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j)] ['dp' num2str(j)]  'dum1' 'dum2' 'dum3' 'dum4' 'NFA_MB' 'Rs' 'Rh'  }; %'NFA_MB'  'tot' 'Rs' 'Rh'
 % find dummies position
 % pay attention all dummies start with dum
 % the constant term must be con
@@ -17,7 +17,7 @@ Regims=unique(regimVar);
 %B=nan(length(Ind_var),40);
 X=double(Data(:,Ind_var));
 % dumi and constant problem
-X(:,~dum_var)=SA(X(:,~dum_var),4);
+%X(:,~dum_var)=SA(X(:,~dum_var),4);
 % X(1:4,:)=[]; % remove from the first Data.Date>1992 ? <2006
 %% infinie  horizon
 for i=0:length(Regims)
@@ -56,11 +56,15 @@ for i=0:length(Regims)
         X3=X(~any(isnan(X),2) & regimVar==Regims(i),~indd);
     end
     ahat=Jackknife_inf_hor(BX0,X3,Y-X2*BX0,Ind_var2,Ind_var2(dum_var2));
-    [bsBX,bsB2,CI]=BootStrap_inf_hor(BX,zeros(1,size(Y,2)),Y-X2*((X2.'*X2)\(X2.'*Y)),size(Y,1),endo_var,ahat);%mean(Y)
+    [bsBX,bsB2,CI]=BootStrap_inf_hor(BX.',zeros(1,size(Y,2)),Y-X2*((X2.'*X2)\(X2.'*Y)),size(Y,1),endo_var,ahat);%mean(Y)
     Res.(['R' num2str(i)])=struct('CI',CI,'BX',bsBX,'B2',bsB2);
     disp(['Regime ' num2str(i) ' is done']);
 end
-clearvars -except Data Res
+clearvars -except Regims Res
 Res.R0.CI.BCa.B1
 Res.R1.CI.BCa.B1
 Res.R2.CI.BCa.B1
+'infinite'
+Res.R0.CI.BCa.B2
+Res.R1.CI.BCa.B2
+Res.R2.CI.BCa.B2
