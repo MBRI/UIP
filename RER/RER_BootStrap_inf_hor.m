@@ -1,4 +1,4 @@
-function [BX,B2,CI,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
+function [BX,B2,CI,X]=RER_BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
 %% bootstrap infinite horizon UIP
 % B is the estimated coef. matrix without dummy and constant
 % Starting point to run the bootstrap
@@ -9,27 +9,58 @@ function [BX,B2,CI,X]=BootStrap_inf_hor(B,StartingPoint,Err,Tt,Var_names,ahat)
 FireCount=500+Tt; % the size of samples
 BurnCount=3000; % the number of generated sapmles
 alpha=0.1;% significant level
+% EE_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'EE[\w*]'));
+% dp_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'dp[\w*]'));
+
+drt_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'drt[\w*]'));
+dr_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[0-9]'));
 EE_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'EE[\w*]'));
 dp_Position=cellfun(@(x) ~isempty(x),regexpi(Var_names,'dp[\w*]'));
+rer_Position=strcmp(Var_names,'rer');
+
 % Step1. Get the estimation data and errors
 Borig=B;
 K=size(B,1);
 % impose Restriction
-% EE restriction
-B(:,EE_Position)=zeros(1,K);
-% dp restriction
-delta1=zeros(K,1);
-delta1(strcmp(Var_names,'rer'),1)=1;
-delta3=zeros(K,1);
- delta3(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dr[\w*]')),1)=1; %% Notice
+% drt res.
+B(:,drt_Position)=zeros(1,K);
 
-B(:,dp_Position)=B(:,strcmp(Var_names,'rer'))+delta3-delta1; %% Notice
+% EE restriction
+if sum(EE_Position)
+delta1=zeros(K,1);
+delta1(rer_Position,1)=1; %real exchange rate multipler
+B(:,EE_Position)=B(:,drt_Position)+B(:,rer_Position)+delta1;
+end
+
+% dp restriction
+if sum(dp_Position) && sum(dr_Position)
+    B(:,dp_Position)=B(:,dr_Position)-B(:,drt_Position);
+end
 
 % error term restriction
 EC=eye(size(Err,2));
-EC(EE_Position,EE_Position)=0;% zero sel error
-EC(cellfun(@(x) ~isempty(x),regexpi(Var_names,'dp[\w*]')),EE_Position)=-1;% zero sel error
-EC(cellfun(@(x) ~isempty(x),regexpi(Var_names,'rer')),EE_Position)=1;% zero sel error
+
+if sum(EE_Position)
+EC(drt_Position,drt_Position)=0;% zero sel error
+EC(EE_Position,drt_Position)=1;% zero sel error
+EC(rer_Position,drt_Position)=-1;% zero sel error
+end
+
+if sum(dp_Position) && sum(dr_Position)
+    
+    EC(dp_Position,dp_Position)=0;% zero sel error
+    EC(EE_Position,dp_Position)=-1;% zero sel error
+    EC(rer_Position,dp_Position)=+1;% zero sel error
+    EC(dr_Position,dp_Position)=+1;% zero sel error
+end
+
+
+% check the epxosion
+if max(abs(eig(B)))>0.96
+    warning('The Explosive Transition Matrix Found.')
+end
+
+
 warning('off')
 
 X=nan(FireCount,K,BurnCount);
@@ -51,11 +82,11 @@ while(b<BurnCount)
         X(f,:,b)=X(f-1,:,b)*B+Err(ee(f),:)*EC;
     end
     % Step3. Estimate model with the last t observation
-    [BX(:,:,b),B2(:,b),B1(:,b)]=est(X(end-Tt-1:end,:,b),EE_Position);%(,:,b)
+    [BX(:,:,b),B2(:,b),B1(:,b)]=est(X(end-Tt-1:end,:,b),drt_Position);%(,:,b)
     if any(any(isnan(BX(:,:,b))))
-       b=b-1;
+        b=b-1;
     elseif rem(b,300)==0
-       disp(['Done::' num2str(b)]); 
+        disp(['Done::' num2str(b)]);
     end
     % Step4. Store the results
     % if abs(B2(1,b))>4
@@ -74,9 +105,9 @@ Prc2=prctile(B2,100*[alpha,0.5,1-alpha],2);
 % Prc.Prc1=Prc1;
 % Prc.Prc2=Prc2;
 % BCa
-B1O=B(EE_Position,:);% original B1
-B2O=(B1O/(eye(size(B,2))-B)).';% original B2
-B1O=B1O.';
+B1O=B(:,drt_Position);% original B1
+B2O=(B1O.'/(eye(size(B,2))-B)).';% original B2
+
 Tk=size(B2,2);
 if Tk<1000
     warning(['inefficient sampling :: ' num2str(Tk) ' from ' num2str(BurnCount) ])
@@ -106,9 +137,9 @@ for k=1:K
 end
 % Prc.BCa1=BCa1;
 % Prc.BCa2=BCa2;
-B1O=Borig(EE_Position,:);% original B1
-B2O=(B1O/(eye(size(Borig,2))-Borig)).';% original B2
-B1O=B1O.';
+B1O=Borig(:,drt_Position);% original B1
+B2O=(B1O.'/(eye(size(Borig,2))-Borig)).';% original B2
+
 % BCa Stored
 B2CI=mat2dataset([BCa2, B2O],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',Var_names);
 B1CI=mat2dataset([BCa1, B1O],'varnames',{'lower' 'Mod' 'Upper' 'Observed'},'obsnames',Var_names);
@@ -125,7 +156,7 @@ B1CI.Sig=B1CI.lower<=B1O & B1CI.Upper>=B1O;
 CI.Prc.B1=B1CI;
 CI.Prc.B2=B2CI;
 end
-function [BX,B2,B1,Er]=est(X,EE_Position)
+function [BX,B2,B1,Er]=est(X,drt_Position)
 %% infinie  horizon
 Y=lagmatrix(X,-1); % remove constant and dummy
 inan=any(isnan(X),2) | any(isnan(Y),2);
@@ -140,7 +171,7 @@ Y(inan,:)=[];
 
 % BX(~indd,~indd)=(X.'*X)\X.'*Y;
 BX=(X.'*X)\X.'*Y;
-B1=BX(EE_Position,:);
+B1=BX(:,drt_Position).';
 if any(any(isnan(BX)))
     EigenValues=1;
 else

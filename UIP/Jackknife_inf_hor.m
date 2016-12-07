@@ -120,8 +120,9 @@ Y(inan,:)=[];
 
 % BX(~indd,~indd)=(X.'*X)\X.'*Y;
 BX0=(X.'*X)\X.'*Y;
-B1=BX0(EE_Position,:);
 BX=BX0(1:end-size(Exo,2),:);
+B1=BX(:,EE_Position).';
+
 % if any(any(isnan(BX)))
 %     EigenValues=1;
 % else
