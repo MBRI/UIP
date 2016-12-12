@@ -5,7 +5,7 @@
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'dum' 'Con'  'Openness' 'tot' 'Rs' 'Rh'}; % independent Variables
 % Ind_var={'rer' 'EE1' 'dr0' 'dpi0' 'Con' 'dum2'  }; % it is good
 load('data5.mat')
-for j=0:2
+for j=0:1
     Ind_var={ 'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j)] ['dp' num2str(j)]  'dum1' 'dum2' 'dum3' 'dum4' 'NFA_MB' ['rs' num2str(j)] ['rh' num2str(j)]}; %'NFA_MB'  'tot' 'Rs' 'Rh'
 %     Ind_var={ 'rer' ['EE' num2str(j)]  'Con' ['dr' num2str(j)] ['dp' num2str(j)]  'dum1' 'dum2' 'dum3' 'dum4'}; %'NFA_MB'  'tot' 'Rs' 'Rh'
     % find dummies position
